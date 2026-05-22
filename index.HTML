@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Karoo Boutik - Gestion complète</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s ease, color 0.2s, border-color 0.2s, transform 0.1s;
+        }
+        body {
+            padding: 16px;
+            min-height: 100vh;
+        }
+        :root {
+            --bg-body: #fff0f3;
+            --bg-app: white;
+            --text-primary: #1e1e2f;
+            --text-soft: #b84c6c;
+            --card-bg: #fff8fa;
+            --border: #ffe2ec;
+            --btn-primary: #ff80b5;
+            --btn-hover: #ff5d99;
+            --accent: #e6396e;
+            --header-grad-start: #ff80b5;
+            --header-grad-end: #ff4d8c;
+            --table-header: #ffecf2;
+            --shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            --input-bg: white;
+        }
+        body.dark {
+            --bg-body: #121212;
+            --bg-app: #1e1e2a;
+            --text-primary: #f0f0f0;
+            --text-soft: #ff99c2;
+            --card-bg: #2a2a35;
+            --border: #3a3a48;
+            --btn-primary: #c53a6b;
+            --btn-hover: #e05a8b;
+            --accent: #ff99c2;
+            --header-grad-start: #2c1a24;
+            --header-grad-end: #4a2a38;
+            --table-header: #2a2230;
+            --shadow: 0 20px 35px -12px rgba(0,0,0,0.4);
+            --input-bg: #2a2a35;
+        }
+        body { background: var(--bg-body); }
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-app);
+            border-radius: 32px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, var(--header-grad-start), var(--header-grad-end));
+            padding: 18px 28px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .logo h1 { font-size: 1.8rem; font-weight: 700; }
+        .logo p { font-size: 0.75rem; opacity: 0.9; }
+        .toggle-theme {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 60px;
+            padding: 8px 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--table-header);
+            padding: 12px 20px 0 20px;
+            flex-wrap: wrap;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            border-radius: 40px 40px 0 0;
+            cursor: pointer;
+            color: var(--text-soft);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--bg-app);
+            color: var(--accent);
+        }
+        .tab-content {
+            display: none;
+            padding: 28px;
+            animation: fade 0.25s ease;
+        }
+        .tab-content.active { display: block; }
+        @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-bar input {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 60px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 28px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .card h3 { font-size: 0.85rem; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
+        .card .value { font-size: 1.8rem; font-weight: 800; color: var(--accent); }
+        .trend-up { color: #2e7d32; background: #e8f5e9; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; display: inline-block; }
+        .trend-down { color: #c62828; background: #ffebee; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            margin-bottom: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--table-header); color: var(--accent); }
+        button {
+            background: var(--btn-primary);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background: var(--btn-hover); transform: scale(0.98); }
+        button.danger { background: #ffb3c6; color: #a13256; }
+        .small-btn { padding: 5px 12px; font-size: 0.75rem; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 16px;
+            border-radius: 60px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        textarea { border-radius: 20px; resize: vertical; }
+        .form-modal {
+            background: var(--card-bg);
+            border-radius: 28px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--border);
+        }
+        .product-img { width: 48px; height: 48px; object-fit: cover; border-radius: 12px; background: #f0f0f0; }
+        .cart-item {
+            background: var(--border);
+            margin: 8px 0;
+            padding: 10px 16px;
+            border-radius: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .badge-warning { background: #ffecb3; color: #b45f06; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        footer { text-align: center; padding: 16px; font-size: 0.7rem; background: var(--table-header); color: var(--text-soft); }
+        @media (max-width: 700px) {
+            .tabs { justify-content: flex-start; }
+            .dashboard-cards { grid-template-columns: 1fr 1fr; }
+            .cart-item { flex-direction: column; align-items: flex-start; }
+        }
+        .validate-pulse { animation: pulse 0.5s ease; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="header">
+        <div class="logo"><h1><i class="fas fa-ribbon"></i> Karoo Boutik</h1><p>Stock • Ventes • Clients • Rendez-vous</p></div>
+        <button class="toggle-theme" id="themeToggle"><i class="fas fa-moon"></i> <span>Mode sombre</span></button>
+    </div>
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
+        <button class="tab-btn" data-tab="products"><i class="fas fa-boxes"></i> Produits</button>
+        <button class="tab-btn" data-tab="sales"><i class="fas fa-shopping-cart"></i> Vente</button>
+        <button class="tab-btn" data-tab="clients"><i class="fas fa-users"></i> Clients</button>
+        <button class="tab-btn" data-tab="appointments"><i class="fas fa-calendar-alt"></i> Rendez-vous</button>
+        <button class="tab-btn" data-tab="reporting"><i class="fas fa-chart-line"></i> Reporting</button>
+        <button class="tab-btn" data-tab="history"><i class="fas fa-receipt"></i> Historique</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="tab-content active">
+        <div class="dashboard-cards">
+            <div class="card"><h3><i class="fas fa-chart-line"></i> CA cette semaine</h3><div class="value" id="caWeek">0 FCFA</div><div id="weekChange" class="small-text"></div></div>
+            <div class="card"><h3><i class="fas fa-chart-line"></i> CA ce mois</h3><div class="value" id="caMonth">0 FCFA</div><div id="monthChange" class="small-text"></div></div>
+            <div class="card"><h3><i class="fas fa-users"></i> Clients</h3><div class="value" id="totalClients">0</div></div>
+            <div class="card"><h3><i class="fas fa-calendar-check"></i> Rendez-vous</h3><div class="value" id="upcomingAppointments">0</div><div class="small-text">à venir (7j)</div></div>
+        </div>
+        <div class="chart-container" style="background: var(--card-bg); border-radius: 28px; padding:20px; border:1px solid var(--border);">
+            <h3 style="color:var(--accent); margin-bottom:15px;"><i class="fas fa-calendar-week"></i> Évolution des ventes (30 jours)</h3>
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- PRODUITS avec recherche -->
+    <div id="products" class="tab-content">
+        <div class="flex-between">
+            <button id="openAddProductBtn"><i class="fas fa-plus"></i> Nouveau produit</button>
+            <div class="search-bar" style="margin-bottom:0;"><i class="fas fa-search"></i> <input type="text" id="searchProduct" placeholder="Rechercher un produit..."></div>
+        </div>
+        <div class="table-wrapper"><table><thead><tr><th>Photo</th><th>Nom</th><th>Prix (FCFA)</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="productsList"></tbody></table></div>
+        <div id="productFormModal" style="display:none;" class="form-modal">
+            <h3 id="formTitle">Ajouter produit</h3>
+            <input type="text" id="prodName" placeholder="Nom">
+            <input type="number" id="prodPrice" placeholder="Prix FCFA" step="1">
+            <input type="number" id="prodStock" placeholder="Stock">
+            <label><i class="fas fa-image"></i> Photo : <input type="file" id="prodImage" accept="image/*"></label>
+            <div><img id="imgPreview" style="max-width:80px; border-radius:12px; display:none;"></div>
+            <input type="hidden" id="editId">
+            <div class="flex-between"><button id="saveProductBtn">Enregistrer</button><button id="cancelProductBtn" class="danger">Annuler</button></div>
+        </div>
+    </div>
+
+    <!-- VENTE -->
+    <div id="sales" class="tab-content">
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px;">
+            <div><h3><i class="fas fa-list-ul"></i> Produits</h3><div class="search-bar"><i class="fas fa-search"></i> <input type="text" id="searchSellProduct" placeholder="Rechercher produit..."></div><div class="table-wrapper" style="max-height: 450px; overflow-y: auto;"><table><thead><tr><th>Photo</th><th>Nom</th><th>Prix</th><th>Stock</th><th></th></tr></thead><tbody id="sellProductList"></tbody></table></div></div>
+            <div><h3><i class="fas fa-shopping-basket"></i> Panier</h3>
+                <select id="clientSelect" style="margin-bottom:12px;"><option value="">Client anonyme</option></select>
+                <div id="cartItemsContainer"></div>
+                <div class="total-cart" id="cartTotal" style="font-size:1.4rem; font-weight:bold; text-align:right; margin-top:16px; border-top:2px dashed var(--accent); padding-top:12px;">Total : 0 FCFA</div>
+                <button id="validateSaleBtn" style="width:100%; margin-top:15px;"><i class="fas fa-print"></i> Valider & ticket PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENTS avec recherche -->
+    <div id="clients" class="tab-content">
+        <div class="flex-between">
+            <button id="openAddClientBtn"><i class="fas fa-user-plus"></i> Nouveau client</button>
+            <div class="search-bar" style="margin-bottom:0;"><i class="fas fa-search"></i> <input type="text" id="searchClient" placeholder="Rechercher client..."></div>
+        </div>
+        <div class="table-wrapper"><table><thead><tr><th>Nom</th><th>Téléphone</th><th>Email</th><th>Total achats</th><th>Actions</th></tr></thead><tbody id="clientsList"></tbody></table></div>
+        <div id="clientFormModal" style="display:none;" class="form-modal">
+            <h3 id="clientFormTitle">Ajouter client</h3>
+            <input type="text" id="clientName" placeholder="Nom complet">
+            <input type="tel" id="clientPhone" placeholder="Téléphone">
+            <input type="email" id="clientEmail" placeholder="Email">
+            <textarea id="clientAddress" placeholder="Adresse / notes"></textarea>
+            <input type="hidden" id="editClientId">
+            <div class="flex-between"><button id="saveClientBtn">Enregistrer</button><button id="cancelClientBtn" class="danger">Annuler</button></div>
+        </div>
+    </div>
+
+    <!-- RENDEZ-VOUS avec recherche -->
+    <div id="appointments" class="tab-content">
+        <div class="flex-between">
+            <button id="openAddAppointmentBtn"><i class="fas fa-plus"></i> Nouveau rendez-vous</button>
+            <div class="search-bar" style="margin-bottom:0;"><i class="fas fa-search"></i> <input type="text" id="searchAppointment" placeholder="Rechercher RDV..."></div>
+        </div>
+        <div class="table-wrapper"><table><thead><tr><th>Date/heure</th><th>Titre</th><th>Client</th><th>Note</th><th>Actions</th></tr></thead><tbody id="appointmentsList"></tbody></table></div>
+        <div id="appointmentFormModal" style="display:none;" class="form-modal">
+            <h3>Rendez-vous</h3>
+            <input type="datetime-local" id="appDateTime">
+            <input type="text" id="appTitle" placeholder="Titre (ex: Essayage)">
+            <select id="appClientId"><option value="">Sans client</option></select>
+            <textarea id="appNote" placeholder="Description / note"></textarea>
+            <input type="hidden" id="editAppId">
+            <div class="flex-between"><button id="saveAppointmentBtn">Enregistrer</button><button id="cancelAppointmentBtn" class="danger">Annuler</button></div>
+        </div>
+    </div>
+
+    <!-- REPORTING -->
+    <div id="reporting" class="tab-content">
+        <div class="dashboard-cards">
+            <div class="card"><h3>Semaine dernière</h3><div class="value" id="lastWeekCa">0 FCFA</div></div>
+            <div class="card"><h3>Semaine en cours</h3><div class="value" id="currentWeekCa">0 FCFA</div><div id="weekEvolution" class="small-text"></div></div>
+            <div class="card"><h3>Mois dernier</h3><div class="value" id="lastMonthCa">0 FCFA</div></div>
+            <div class="card"><h3>Mois en cours</h3><div class="value" id="currentMonthCa">0 FCFA</div><div id="monthEvolution" class="small-text"></div></div>
+        </div>
+        <div class="chart-container"><canvas id="compareChart"></canvas></div>
+        <div class="table-wrapper"><h3 style="margin:15px 0 5px">Ventes par client</h3><table><thead><tr><th>Client</th><th>Nombre d'achats</th><th>Total dépensé</th></tr></thead><tbody id="clientStats"></tbody></table></div>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div id="history" class="tab-content">
+        <div class="table-wrapper"><table><thead><tr><th>ID</th><th>Date</th><th>Client</th><th>Articles</th><th>Total</th><th>Ticket</th></tr></thead><tbody id="historyList"></tbody></table></div>
+    </div>
+    <footer>Karoo Boutik • Données locales • Recherche instantanée • Animations</footer>
+</div>
+
+<script>
+    // ---------- DONNÉES ----------
+    let products = [];
+    let sales = [];
+    let clients = [];
+    let appointments = [];
+    let cart = [];
+    let theme = localStorage.getItem('karoo_theme') || 'rose';
+    let chartMonthly, chartCompare;
+
+    function formatFCFA(amount) { return Math.round(amount).toLocaleString('fr-FR') + ' FCFA'; }
+    function saveAll() {
+        localStorage.setItem('karoo_products', JSON.stringify(products));
+        localStorage.setItem('karoo_sales', JSON.stringify(sales));
+        localStorage.setItem('karoo_clients', JSON.stringify(clients));
+        localStorage.setItem('karoo_appointments', JSON.stringify(appointments));
+        localStorage.setItem('karoo_theme', theme);
+    }
+    function loadData() {
+        const p = localStorage.getItem('karoo_products');
+        const s = localStorage.getItem('karoo_sales');
+        const c = localStorage.getItem('karoo_clients');
+        const a = localStorage.getItem('karoo_appointments');
+        if(p) products = JSON.parse(p);
+        else products = [{id:1,name:"Robe Corail",price:4990,stock:12,imageBase64:""},{id:2,name:"Parfum Rosé",price:3500,stock:8,imageBase64:""},{id:3,name:"Sac à main",price:7990,stock:5,imageBase64:""},{id:4,name:"Bougie Florale",price:1990,stock:20,imageBase64:""}];
+        if(s) sales = JSON.parse(s);
+        else sales = [];
+        if(c) clients = JSON.parse(c);
+        else clients = [{id:1,name:"Awa Diallo",phone:"01020304",email:"awa@example.com",address:"",totalSpent:0,purchaseCount:0}];
+        if(a) appointments = JSON.parse(a);
+        else appointments = [{id:1,datetime:"2025-05-25T10:00",title:"Essayage robe",clientId:1,note:"Taille M"}];
+        renderAll();
+        applyTheme();
+    }
+    function getNextId(arr) { return arr.length ? Math.max(...arr.map(i=>i.id)) + 1 : 1; }
+
+    function renderAll() {
+        renderDashboard();
+        renderProductsTable();
+        renderSellProductList();
+        renderCart();
+        renderClients();
+        renderAppointments();
+        renderReporting();
+        renderHistory();
+        populateClientSelects();
+        saveAll();
+    }
+
+    // DASHBOARD & COMPARATIFS
+    function getWeekRange(date = new Date()) {
+        let d = new Date(date);
+        const day = d.getDay();
+        const diffToMonday = (day === 0 ? 6 : day-1);
+        const monday = new Date(d); monday.setDate(d.getDate() - diffToMonday);
+        monday.setHours(0,0,0,0);
+        const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+        sunday.setHours(23,59,59,999);
+        return { start: monday, end: sunday };
+    }
+    function getMonthRange(date = new Date()) {
+        let d = new Date(date);
+        const start = new Date(d.getFullYear(), d.getMonth(), 1);
+        const end = new Date(d.getFullYear(), d.getMonth()+1, 0, 23,59,59,999);
+        return { start, end };
+    }
+    function getCAInRange(start, end) {
+        return sales.filter(s => new Date(s.date) >= start && new Date(s.date) <= end).reduce((sum, s) => sum + s.total, 0);
+    }
+    function renderDashboard() {
+        const now = new Date();
+        const weekRange = getWeekRange(now);
+        const lastWeek = new Date(now); lastWeek.setDate(now.getDate()-7);
+        const lastWeekRange = getWeekRange(lastWeek);
+        const monthRange = getMonthRange(now);
+        const lastMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);
+        const lastMonthRange = getMonthRange(lastMonth);
+        const caWeek = getCAInRange(weekRange.start, weekRange.end);
+        const caLastWeek = getCAInRange(lastWeekRange.start, lastWeekRange.end);
+        const caMonth = getCAInRange(monthRange.start, monthRange.end);
+        const caLastMonth = getCAInRange(lastMonthRange.start, lastMonthRange.end);
+        document.getElementById('caWeek').innerHTML = formatFCFA(caWeek);
+        document.getElementById('caMonth').innerHTML = formatFCFA(caMonth);
+        let weekChange = caLastWeek ? ((caWeek - caLastWeek)/caLastWeek*100).toFixed(1) : (caWeek>0?100:0);
+        document.getElementById('weekChange').innerHTML = `${weekChange>=0?'📈 +':'📉 '}${weekChange}% vs semaine dernière`;
+        let monthChange = caLastMonth ? ((caMonth - caLastMonth)/caLastMonth*100).toFixed(1) : (caMonth>0?100:0);
+        document.getElementById('monthChange').innerHTML = `${monthChange>=0?'📈 +':'📉 '}${monthChange}% vs mois dernier`;
+        document.getElementById('totalClients').innerText = clients.length;
+        const upcoming = appointments.filter(a => new Date(a.datetime) >= new Date() && new Date(a.datetime) <= new Date(Date.now()+7*86400000)).length;
+        document.getElementById('upcomingAppointments').innerText = upcoming;
+
+        let days30 = [], caDays = [];
+        for(let i=29; i>=0; i--) {
+            let d = new Date(); d.setDate(d.getDate()-i);
+            let start = new Date(d.setHours(0,0,0,0));
+            let end = new Date(d.setHours(23,59,59,999));
+            let ca = sales.filter(s=> new Date(s.date) >= start && new Date(s.date) <= end).reduce((a,b)=>a+b.total,0);
+            days30.push(d.toLocaleDateString('fr', {day:'2-digit',month:'2-digit'}));
+            caDays.push(ca);
+        }
+        if(chartMonthly) chartMonthly.destroy();
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        chartMonthly = new Chart(ctx, { type:'line', data:{ labels:days30, datasets:[{ label:'CA quotidien (FCFA)', data:caDays, borderColor:'#ff80b5', backgroundColor:'rgba(255,128,181,0.1)', fill:true, tension:0.3 }] }, options:{ responsive:true, maintainAspectRatio:true } });
+    }
+
+    // PRODUITS avec recherche
+    function renderProductsTable() {
+        const searchTerm = document.getElementById('searchProduct')?.value.toLowerCase() || '';
+        const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
+        const tbody = document.getElementById('productsList');
+        tbody.innerHTML = '';
+        filtered.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><img src="${p.imageBase64 || 'https://placehold.co/48x48?text=No+Img'}" class="product-img" onerror="this.src='https://placehold.co/48x48?text=Image'"></td>
+                <td>${escapeHtml(p.name)}${p.stock<5?' <span class="badge-warning"><i class="fas fa-exclamation"></i> stock faible</span>':''}</td>
+                <td>${formatFCFA(p.price)}</td>
+                <td>${p.stock}</td>
+                <td><button class="small-btn editProductBtn" data-id="${p.id}"><i class="fas fa-edit"></i></button> <button class="small-btn danger deleteProductBtn" data-id="${p.id}"><i class="fas fa-trash"></i></button></td>`;
+            tbody.appendChild(tr);
+        });
+        attachProductEvents();
+    }
+    function attachProductEvents() {
+        document.querySelectorAll('.editProductBtn').forEach(btn => btn.addEventListener('click', (e) => editProduct(parseInt(btn.dataset.id))));
+        document.querySelectorAll('.deleteProductBtn').forEach(btn => btn.addEventListener('click', (e) => deleteProduct(parseInt(btn.dataset.id))));
+    }
+    function editProduct(id) { const p=products.find(x=>x.id===id); if(p){ document.getElementById('prodName').value=p.name; document.getElementById('prodPrice').value=p.price; document.getElementById('prodStock').value=p.stock; document.getElementById('editId').value=p.id; document.getElementById('formTitle').innerText="Modifier produit"; if(p.imageBase64){ document.getElementById('imgPreview').src=p.imageBase64; document.getElementById('imgPreview').style.display='block';} else document.getElementById('imgPreview').style.display='none'; document.getElementById('productFormModal').style.display='block'; } }
+    function deleteProduct(id) { if(confirm("Supprimer ?")){ products=products.filter(p=>p.id!==id); cart=cart.filter(c=>c.productId!==id); renderAll(); } }
+    document.getElementById('prodImage')?.addEventListener('change', function(e) { const file=e.target.files[0]; if(file){ const reader=new FileReader(); reader.onload=function(ev){ document.getElementById('imgPreview').src=ev.target.result; document.getElementById('imgPreview').style.display='block'; }; reader.readAsDataURL(file); } });
+    document.getElementById('saveProductBtn')?.addEventListener('click',()=>{ let name=document.getElementById('prodName').value.trim(); let price=parseInt(document.getElementById('prodPrice').value); let stock=parseInt(document.getElementById('prodStock').value); if(!name||isNaN(price)||isNaN(stock)){alert("Champs invalides");return;} let img=document.getElementById('imgPreview').src; if(img===window.location.href||!img) img=""; let id=document.getElementById('editId').value; if(id){ let idx=products.findIndex(p=>p.id==id); if(idx!==-1) products[idx]={...products[idx],name,price,stock,imageBase64:img}; } else { products.push({id:getNextId(products),name,price,stock,imageBase64:img}); } document.getElementById('productFormModal').style.display='none'; renderAll(); });
+    document.getElementById('cancelProductBtn')?.addEventListener('click',()=>{document.getElementById('productFormModal').style.display='none';});
+    document.getElementById('openAddProductBtn')?.addEventListener('click',()=>{ document.getElementById('prodName').value=''; document.getElementById('prodPrice').value=''; document.getElementById('prodStock').value=''; document.getElementById('editId').value=''; document.getElementById('imgPreview').style.display='none'; document.getElementById('productFormModal').style.display='block'; });
+    document.getElementById('searchProduct')?.addEventListener('input', () => renderProductsTable());
+
+    // VENTE avec recherche produits
+    function renderSellProductList() {
+        const searchTerm = document.getElementById('searchSellProduct')?.value.toLowerCase() || '';
+        const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
+        let tbody = document.getElementById('sellProductList');
+        tbody.innerHTML = '';
+        filtered.forEach(p => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td><img src="${p.imageBase64||'https://placehold.co/40x40'}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;"></td>
+                <td>${escapeHtml(p.name)}</td>
+                <td>${formatFCFA(p.price)}</td>
+                <td>${p.stock}</td>
+                <td><button class="small-btn addToCartBtn" data-id="${p.id}" data-name="${escapeHtml(p.name)}" data-price="${p.price}"><i class="fas fa-cart-plus"></i></button></td>`;
+            tbody.appendChild(tr);
+        });
+        document.querySelectorAll('.addToCartBtn').forEach(btn => btn.addEventListener('click', () => { let id=parseInt(btn.dataset.id), name=btn.dataset.name, price=parseFloat(btn.dataset.price); addToCart(id,name,price); }));
+    }
+    document.getElementById('searchSellProduct')?.addEventListener('input', () => renderSellProductList());
+
+    function addToCart(pid,name,price){ let prod=products.find(p=>p.id===pid); if(!prod||prod.stock<=0){alert("Stock insuffisant");return;} let existing=cart.find(c=>c.productId===pid); if(existing){ if(prod.stock<existing.quantity+1){alert("Stock épuisé");return;} existing.quantity++; } else cart.push({productId:pid,name,price,quantity:1}); renderCart(); }
+    function renderCart(){ let container=document.getElementById('cartItemsContainer'); if(!container)return; container.innerHTML=''; let total=0; cart.forEach((item,idx)=>{ let subtotal=item.price*item.quantity; total+=subtotal; let div=document.createElement('div'); div.className='cart-item'; div.innerHTML=`<span><strong>${escapeHtml(item.name)}</strong> (${formatFCFA(item.price)} x ${item.quantity}) = ${formatFCFA(subtotal)}</span><div><button class="small-btn danger" data-cartidx="${idx}">-1</button> <button class="small-btn danger" data-removeall="${idx}"><i class="fas fa-trash"></i></button></div>`; container.appendChild(div); }); document.getElementById('cartTotal').innerHTML=`Total : ${formatFCFA(total)}`; document.querySelectorAll('[data-cartidx]').forEach(btn=>btn.addEventListener('click',()=>{ let idx=parseInt(btn.dataset.cartidx); if(cart[idx]){ cart[idx].quantity--; if(cart[idx].quantity<=0) cart.splice(idx,1); renderCart(); } })); document.querySelectorAll('[data-removeall]').forEach(btn=>btn.addEventListener('click',()=>{ let idx=parseInt(btn.dataset.removeall); if(cart[idx]) cart.splice(idx,1); renderCart(); })); }
+    function validateSaleAndPrint(){ if(cart.length===0){alert("Panier vide");return;} for(let item of cart){ let prod=products.find(p=>p.id===item.productId); if(!prod||prod.stock<item.quantity){alert(`Stock insuffisant pour ${item.name}`);return;} } for(let item of cart){ let prod=products.find(p=>p.id===item.productId); prod.stock-=item.quantity; } let clientId=document.getElementById('clientSelect').value; let totalSale=cart.reduce((s,i)=>s+(i.price*i.quantity),0); let newSale={ id:getNextId(sales), date:new Date().toISOString(), items:cart.map(c=>({name:c.name,qty:c.quantity,price:c.price})), total:totalSale, clientId:clientId?parseInt(clientId):null }; sales.push(newSale); if(clientId){ let client=clients.find(c=>c.id==clientId); if(client){ client.totalSpent=(client.totalSpent||0)+totalSale; client.purchaseCount=(client.purchaseCount||0)+1; } } generateTicketPDF(newSale); cart=[]; renderAll(); let btn=document.getElementById('validateSaleBtn'); btn.classList.add('validate-pulse'); setTimeout(()=>btn.classList.remove('validate-pulse'),500); }
+    function generateTicketPDF(sale){ const { jsPDF } = window.jspdf; let doc=new jsPDF(); doc.setFillColor(245,230,235); doc.rect(0,0,210,297,'F'); doc.setTextColor(200,50,100); doc.setFontSize(18); doc.text("Karoo Boutik",20,20); doc.setFontSize(10); doc.setTextColor(80,50,70); let clientNom= sale.clientId ? (clients.find(c=>c.id===sale.clientId)?.name||"Client") : "Anonyme"; doc.text(`Ticket n° ${sale.id} - ${new Date(sale.date).toLocaleString()} - Client: ${clientNom}`,20,32); let tableData=sale.items.map(i=>[i.name,i.qty,`${i.price.toFixed(0)} FCFA`,`${(i.qty*i.price).toFixed(0)} FCFA`]); doc.autoTable({ startY:45, head:[['Article','Qté','Prix unit.','Total']], body:tableData, foot:[['','','TOTAL',`${sale.total.toFixed(0)} FCFA`]], theme:'striped', headStyles:{fillColor:[255,150,190]}, footStyles:{fillColor:[255,220,235]} }); doc.text("Merci de votre visite ♡",20,doc.lastAutoTable.finalY+12); let pdfUrl=doc.output('dataurlstring'); window.open(pdfUrl,'_blank'); }
+
+    // CLIENTS avec recherche
+    function renderClients(){
+        const searchTerm = document.getElementById('searchClient')?.value.toLowerCase() || '';
+        const filtered = clients.filter(c => c.name.toLowerCase().includes(searchTerm));
+        let tbody=document.getElementById('clientsList'); tbody.innerHTML='';
+        filtered.forEach(c=>{ let totalSpent=c.totalSpent||0; let tr=document.createElement('tr'); tr.innerHTML=`<td>${escapeHtml(c.name)}</td><td>${c.phone||''}</td><td>${c.email||''}</td><td>${formatFCFA(totalSpent)}</td><td><button class="small-btn editClientBtn" data-id="${c.id}"><i class="fas fa-edit"></i></button> <button class="small-btn danger deleteClientBtn" data-id="${c.id}"><i class="fas fa-trash"></i></button></td>`; tbody.appendChild(tr); });
+        document.querySelectorAll('.editClientBtn').forEach(btn=>btn.addEventListener('click',()=>editClient(parseInt(btn.dataset.id))));
+        document.querySelectorAll('.deleteClientBtn').forEach(btn=>btn.addEventListener('click',()=>{ if(confirm("Supprimer client ?")){ clients=clients.filter(cl=>cl.id!=parseInt(btn.dataset.id)); renderAll(); } }));
+    }
+    function editClient(id){ let c=clients.find(x=>x.id===id); if(c){ document.getElementById('clientName').value=c.name; document.getElementById('clientPhone').value=c.phone||''; document.getElementById('clientEmail').value=c.email||''; document.getElementById('clientAddress').value=c.address||''; document.getElementById('editClientId').value=c.id; document.getElementById('clientFormTitle').innerText="Modifier client"; document.getElementById('clientFormModal').style.display='block'; } }
+    document.getElementById('saveClientBtn')?.addEventListener('click',()=>{ let name=document.getElementById('clientName').value.trim(); if(!name){alert("Nom requis");return;} let phone=document.getElementById('clientPhone').value; let email=document.getElementById('clientEmail').value; let address=document.getElementById('clientAddress').value; let id=document.getElementById('editClientId').value; if(id){ let idx=clients.findIndex(c=>c.id==id); if(idx!==-1) clients[idx]={...clients[idx],name,phone,email,address}; } else { clients.push({id:getNextId(clients),name,phone,email,address,totalSpent:0,purchaseCount:0}); } document.getElementById('clientFormModal').style.display='none'; renderAll(); });
+    document.getElementById('cancelClientBtn')?.addEventListener('click',()=>{document.getElementById('clientFormModal').style.display='none';});
+    document.getElementById('openAddClientBtn')?.addEventListener('click',()=>{ document.getElementById('clientName').value=''; document.getElementById('clientPhone').value=''; document.getElementById('clientEmail').value=''; document.getElementById('clientAddress').value=''; document.getElementById('editClientId').value=''; document.getElementById('clientFormTitle').innerText="Ajouter client"; document.getElementById('clientFormModal').style.display='block'; });
+    document.getElementById('searchClient')?.addEventListener('input', () => renderClients());
+
+    // RENDEZ-VOUS avec recherche
+    function renderAppointments(){
+        const searchTerm = document.getElementById('searchAppointment')?.value.toLowerCase() || '';
+        let filtered = appointments.filter(a => a.title.toLowerCase().includes(searchTerm) || (a.note||'').toLowerCase().includes(searchTerm));
+        let tbody=document.getElementById('appointmentsList'); tbody.innerHTML='';
+        filtered.forEach(a=>{ let clientName=a.clientId? (clients.find(c=>c.id===a.clientId)?.name||"Client supprimé") : "Aucun"; let tr=document.createElement('tr'); tr.innerHTML=`<td>${new Date(a.datetime).toLocaleString()}</td><td>${escapeHtml(a.title)}</td><td>${clientName}</td><td>${escapeHtml(a.note||'')}</td><td><button class="small-btn editAppBtn" data-id="${a.id}"><i class="fas fa-edit"></i></button> <button class="small-btn danger deleteAppBtn" data-id="${a.id}"><i class="fas fa-trash"></i></button></td>`; tbody.appendChild(tr); });
+        document.querySelectorAll('.editAppBtn').forEach(btn=>btn.addEventListener('click',()=>editAppointment(parseInt(btn.dataset.id))));
+        document.querySelectorAll('.deleteAppBtn').forEach(btn=>btn.addEventListener('click',()=>{ if(confirm("Supprimer ce rendez-vous ?")){ appointments=appointments.filter(ap=>ap.id!=parseInt(btn.dataset.id)); renderAll(); } }));
+    }
+    function editAppointment(id){ let a=appointments.find(x=>x.id===id); if(a){ document.getElementById('appDateTime').value=a.datetime.slice(0,16); document.getElementById('appTitle').value=a.title; document.getElementById('appNote').value=a.note||''; document.getElementById('editAppId').value=a.id; let sel=document.getElementById('appClientId'); if(sel) sel.value=a.clientId||''; document.getElementById('appointmentFormModal').style.display='block'; } }
+    function populateClientSelects(){ let selClient=document.getElementById('clientSelect'); let selApp=document.getElementById('appClientId'); if(selClient){ selClient.innerHTML='<option value="">Client anonyme</option>'+clients.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join(''); } if(selApp){ selApp.innerHTML='<option value="">Sans client</option>'+clients.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join(''); } }
+    document.getElementById('saveAppointmentBtn')?.addEventListener('click',()=>{ let datetime=document.getElementById('appDateTime').value; if(!datetime){alert("Date/heure requise");return;} let title=document.getElementById('appTitle').value.trim(); if(!title){alert("Titre requis");return;} let clientId=document.getElementById('appClientId').value; let note=document.getElementById('appNote').value; let id=document.getElementById('editAppId').value; if(id){ let idx=appointments.findIndex(a=>a.id==id); if(idx!==-1) appointments[idx]={...appointments[idx],datetime,title,clientId:clientId?parseInt(clientId):null,note}; } else { appointments.push({id:getNextId(appointments),datetime,title,clientId:clientId?parseInt(clientId):null,note}); } document.getElementById('appointmentFormModal').style.display='none'; renderAll(); });
+    document.getElementById('cancelAppointmentBtn')?.addEventListener('click',()=>{document.getElementById('appointmentFormModal').style.display='none';});
+    document.getElementById('openAddAppointmentBtn')?.addEventListener('click',()=>{ document.getElementById('appDateTime').value=''; document.getElementById('appTitle').value=''; document.getElementById('appNote').value=''; document.getElementById('editAppId').value=''; populateClientSelects(); document.getElementById('appointmentFormModal').style.display='block'; });
+    document.getElementById('searchAppointment')?.addEventListener('input', () => renderAppointments());
+
+    // REPORTING
+    function renderReporting(){ 
+        let now=new Date(); let weekRange=getWeekRange(now); let lastWeek=new Date(now); lastWeek.setDate(now.getDate()-7); let lastWeekRange=getWeekRange(lastWeek); let monthRange=getMonthRange(now); let lastMonth=new Date(now.getFullYear(), now.getMonth()-1,1); let lastMonthRange=getMonthRange(lastMonth);
+        let currentWeekCa=getCAInRange(weekRange.start,weekRange.end); let lastWeekCa=getCAInRange(lastWeekRange.start,lastWeekRange.end);
+        let currentMonthCa=getCAInRange(monthRange.start,monthRange.end); let lastMonthCa=getCAInRange(lastMonthRange.start,lastMonthRange.end);
+        document.getElementById('lastWeekCa').innerHTML=formatFCFA(lastWeekCa); document.getElementById('currentWeekCa').innerHTML=formatFCFA(currentWeekCa);
+        let weekEvol=lastWeekCa?((currentWeekCa-lastWeekCa)/lastWeekCa*100).toFixed(1):(currentWeekCa>0?100:0); document.getElementById('weekEvolution').innerHTML=`${weekEvol>=0?'📈 +':'📉 '}${weekEvol}%`;
+        document.getElementById('lastMonthCa').innerHTML=formatFCFA(lastMonthCa); document.getElementById('currentMonthCa').innerHTML=formatFCFA(currentMonthCa);
+        let monthEvol=lastMonthCa?((currentMonthCa-lastMonthCa)/lastMonthCa*100).toFixed(1):(currentMonthCa>0?100:0); document.getElementById('monthEvolution').innerHTML=`${monthEvol>=0?'📈 +':'📉 '}${monthEvol}%`;
+        if(chartCompare) chartCompare.destroy(); let ctx=document.getElementById('compareChart').getContext('2d'); chartCompare=new Chart(ctx,{ type:'bar', data:{ labels:['Semaine dernière','Semaine en cours','Mois dernier','Mois en cours'], datasets:[{ label:'CA (FCFA)', data:[lastWeekCa,currentWeekCa,lastMonthCa,currentMonthCa], backgroundColor:'#ff80b5' }] }, options:{ responsive:true } });
+        let clientStatsBody=document.getElementById('clientStats'); clientStatsBody.innerHTML=''; clients.forEach(c=>{ let totalSpent=sales.filter(s=>s.clientId===c.id).reduce((sum,s)=>sum+s.total,0); let count=sales.filter(s=>s.clientId===c.id).length; if(totalSpent>0){ let tr=document.createElement('tr'); tr.innerHTML=`<td>${escapeHtml(c.name)}</td><td>${count}</td><td>${formatFCFA(totalSpent)}</td>`; clientStatsBody.appendChild(tr); } });
+    }
+
+    // HISTORIQUE
+    function renderHistory(){ let tbody=document.getElementById('historyList'); tbody.innerHTML=''; sales.slice().reverse().forEach(s=>{ let clientName=s.clientId? (clients.find(c=>c.id===s.clientId)?.name||"Client supprimé"):"Anonyme"; let tr=document.createElement('tr'); tr.innerHTML=`<td>#${s.id}</td><td>${new Date(s.date).toLocaleString()}</td><td>${escapeHtml(clientName)}</td><td>${s.items.map(i=>`${i.name}(${i.qty})`).join(', ').substring(0,50)}</td><td>${formatFCFA(s.total)}</td><td><button class="small-btn reprintBtn" data-id="${s.id}"><i class="fas fa-print"></i> Réimprimer</button></td>`; tbody.appendChild(tr); }); document.querySelectorAll('.reprintBtn').forEach(btn=>btn.addEventListener('click',()=>{ let sale=sales.find(s=>s.id==parseInt(btn.dataset.id)); if(sale) generateTicketPDF(sale); })); }
+
+    function escapeHtml(str){ return String(str).replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // THEME
+    function applyTheme(){ if(theme==='dark') document.body.classList.add('dark'); else document.body.classList.remove('dark'); let span=document.querySelector('#themeToggle span'); if(span) span.innerText=theme==='dark'?'Mode rose':'Mode sombre'; let icon=document.querySelector('#themeToggle i'); if(icon) icon.className=theme==='dark'?'fas fa-sun':'fas fa-moon'; }
+    document.getElementById('themeToggle')?.addEventListener('click',()=>{ theme=theme==='rose'?'dark':'rose'; applyTheme(); saveAll(); });
+
+    // GESTION DES ONGLETS (corrigée)
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+    });
+
+    document.getElementById('validateSaleBtn')?.addEventListener('click', validateSaleAndPrint);
+    loadData();
+</script>
+</body>
+</html>
